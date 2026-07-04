@@ -7,6 +7,7 @@ import dns from 'node:dns';
 import process from 'node:process';
 import http from 'node:http';
 import https from 'node:https';
+import child_process from 'node:child_process';
 
 import cors from 'cors';
 import { csrfSync } from 'csrf-sync';
@@ -42,7 +43,7 @@ import {
     migratePublicOverrides,
 } from './users.js';
 
-import getWebpackServeMiddleware from './middleware/webpack-serve.js';
+import getRolldownServeMiddleware from './middleware/rolldown-serve.js';
 import basicAuthMiddleware from './middleware/basicAuth.js';
 import getWhitelistMiddleware from './middleware/whitelist.js';
 import accessLoggerMiddleware, { getAccessLogPath, migrateAccessLog } from './middleware/accessLogWriter.js';
@@ -236,8 +237,8 @@ app.get('/callback/:source?', (request, response) => {
 app.get('/login', loginPageMiddleware);
 
 // Host frontend assets
-const webpackMiddleware = getWebpackServeMiddleware();
-app.use(webpackMiddleware);
+const rolldownMiddleware = getRolldownServeMiddleware();
+app.use(rolldownMiddleware);
 app.use(userCssMiddleware);
 app.use(express.static(path.join(serverDirectory, 'public'), {}));
 
@@ -350,7 +351,7 @@ async function preSetupTasks() {
     initRequestProxy({ enabled: cliArgs.requestProxyEnabled, url: cliArgs.requestProxyUrl, bypass: cliArgs.requestProxyBypass, enableKeepAlive: cliArgs.enableKeepAlive, privateRequestFilterEnabled: requestFilterOptions.enabled });
 
     // Wait for frontend libs to compile
-    await webpackMiddleware.runWebpackCompiler({ pruneCache: true });
+    await rolldownMiddleware.runRolldownCompiler();
 }
 
 /**
@@ -365,29 +366,17 @@ async function postSetupTasks(result) {
 
     if (cliArgs.browserLaunchEnabled) {
         try {
-            // TODO: This should be converted to a regular import when support for Node 18 is dropped
-            const openModule = await import('open');
-            const { default: open, apps } = openModule;
-
-            function getBrowsers() {
-                const isAndroid = process.platform === 'android';
-                if (isAndroid) {
-                    return {};
-                }
-                return {
-                    'firefox': apps.firefox,
-                    'chrome': apps.chrome,
-                    'edge': apps.edge,
-                    'brave': apps.brave,
-                };
-            }
-
-            const validBrowsers = getBrowsers();
-            const appName = validBrowsers[browserLaunchApp.trim().toLowerCase()];
-            const openOptions = appName ? { app: { name: appName } } : {};
-
             console.log(`Launching in a browser: ${browserLaunchApp}...`);
-            await open(browserLaunchUrl.toString(), openOptions);
+            const isAndroid = process.platform === 'android';
+            const darwinApp = browserLaunchApp === 'firefox' ? 'firefox' : browserLaunchApp === 'chrome' ? 'google chrome' : browserLaunchApp === 'edge' ? 'microsoft edge' : browserLaunchApp === 'brave' ? 'brave browser' : '';
+            const linuxBrowser = browserLaunchApp === 'firefox' ? 'firefox' : browserLaunchApp === 'chrome' ? 'google-chrome' : browserLaunchApp === 'edge' ? 'microsoft-edge' : browserLaunchApp === 'brave' ? 'brave-browser' : '';
+            const { command, args } = process.platform === 'darwin'
+                ? { command: 'open', args: darwinApp ? ['-a', darwinApp, browserLaunchUrl.toString()] : [browserLaunchUrl.toString()] }
+                : process.platform === 'win32' && !isAndroid
+                    ? { command: 'cmd', args: ['/c', 'start', '""', browserLaunchUrl.toString()] }
+                    : { command: 'xdg-open', args: linuxBrowser ? [linuxBrowser, browserLaunchUrl.toString()] : [browserLaunchUrl.toString()] };
+            const subprocess = child_process.spawn(command, args, { stdio: 'ignore', detached: true });
+            subprocess.unref();
         } catch (error) {
             console.error('Failed to launch the browser. Open the URL manually.', error);
         }

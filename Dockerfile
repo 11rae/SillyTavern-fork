@@ -31,7 +31,7 @@ RUN \
 
 # Pre-compile public libraries
 RUN \
-  echo "*** Run Webpack ***" && \
+  echo "*** Run Rolldown ***" && \
   node "./docker/build-lib.js"
 
 # Set the entrypoint script and cleanup

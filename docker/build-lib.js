@@ -1,4 +1,4 @@
-import getWebpackServeMiddleware from '../src/middleware/webpack-serve.js';
+import getRolldownServeMiddleware from '../src/middleware/rolldown-serve.js';
 
-const middleware = getWebpackServeMiddleware();
-await middleware.runWebpackCompiler({ forceDist: true });
+const middleware = getRolldownServeMiddleware();
+await middleware.runRolldownCompiler({ forceDist: true });

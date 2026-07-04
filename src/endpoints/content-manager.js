@@ -125,6 +125,25 @@ export function getDefaultPresetFile(filename) {
 }
 
 /**
+ * Recursively copies a file or directory without traversing above the source's parent directory.
+ * Replaces fs.cpSync, which under Deno requires read access to ancestor directories outside the project.
+ * @param {string} src Source path
+ * @param {string} dest Destination path
+ */
+function copyContentRecursive(src, dest) {
+    const stat = fs.statSync(src);
+    if (stat.isDirectory()) {
+        fs.mkdirSync(dest, { recursive: true });
+        for (const entry of fs.readdirSync(src)) {
+            copyContentRecursive(path.join(src, entry), path.join(dest, entry));
+        }
+    } else {
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.copyFileSync(src, dest);
+    }
+}
+
+/**
  * Seeds content from a content index into a target location.
  * @param {ContentItem[]} contentIndex Content index
  * @param {string} contentLogPath Path to the content log file
@@ -169,8 +188,7 @@ function seedContent(contentIndex, contentLogPath, resolveTarget, forceCategorie
             continue;
         }
 
-        fs.mkdirSync(contentTarget, { recursive: true });
-        fs.cpSync(contentPath, targetPath, { recursive: true, force: false });
+        copyContentRecursive(contentPath, targetPath);
         setPermissionsSync(targetPath);
         console.info(`Content file ${contentItem.filename} copied to ${contentTarget}`);
         anyContentAdded = true;

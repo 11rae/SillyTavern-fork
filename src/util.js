@@ -11,11 +11,10 @@ import crypto from 'node:crypto';
 import readline from 'node:readline';
 
 import yaml from 'yaml';
-import { sync as commandExistsSync } from 'command-exists';
+import isomorphicGit from 'isomorphic-git';
 import _ from 'lodash';
 import yauzl from 'yauzl';
 import mime from 'mime-types';
-import { default as simpleGit } from 'simple-git';
 import chalk from 'chalk';
 import bytes from 'bytes';
 import { LOG_LEVELS, CHAT_COMPLETION_SOURCES, MEDIA_REQUEST_TYPE } from './constants.js';
@@ -144,18 +143,21 @@ export async function getVersion() {
         const require = createRequire(import.meta.url);
         const pkgJson = require(path.join(serverDirectory, './package.json'));
         pkgVersion = pkgJson.version;
-        if (commandExistsSync('git')) {
-            const git = simpleGit({ baseDir: serverDirectory });
-            gitRevision = await git.revparse(['--short', 'HEAD']);
-            gitBranch = await git.revparse(['--abbrev-ref', 'HEAD']);
-            commitDate = await git.show(['-s', '--format=%ci', gitRevision]);
-
-            const trackingBranch = await git.revparse(['--abbrev-ref', '@{u}']);
-
-            // Might fail, but exception is caught. Just don't run anything relevant after in this block...
-            const localLatest = await git.revparse(['HEAD']);
-            const remoteLatest = await git.revparse([trackingBranch]);
-            isLatest = localLatest === remoteLatest;
+        const log = await isomorphicGit.log({ fs, dir: serverDirectory, depth: 1 });
+        if (log.length > 0) {
+            const entry = log[0];
+            gitRevision = entry.oid.substring(0, 7);
+            commitDate = new Date(entry.commit.committer.timestamp * 1000).toISOString();
+            gitBranch = await isomorphicGit.currentBranch({ fs, dir: serverDirectory, fullname: false });
+            if (gitBranch) {
+                try {
+                    const localOid = entry.oid;
+                    const remoteOid = await isomorphicGit.resolveRef({ fs, dir: serverDirectory, ref: `refs/remotes/origin/${gitBranch}` });
+                    isLatest = localOid === remoteOid;
+                } catch {
+                    isLatest = true;
+                }
+            }
         }
     } catch {
         // suppress exception

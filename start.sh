@@ -13,4 +13,4 @@ export NODE_ENV=production
 deno install --prod -q
 
 echo "Entering SillyTavern..."
-node "server.js" "$@"
+deno task start:deno
