@@ -121,8 +121,8 @@
         "start:electron": "cd ./src/electron && npm run start",
         "start:deno": "BROWSERSLIST_ROOT_PATH=. deno run --permission-set=default server.js",
         "start:no-csrf": "node server.js --disableCsrf",
-        "lint": "eslint \"src/**/*.js\" \"public/**/*.js\" ./*.js",
-        "lint:fix": "eslint \"src/**/*.js\" \"public/**/*.js\" ./*.js --fix",
+        "lint": "oxlint \"src/**/*.js\" \"public/**/*.js\" ./*.js",
+        "lint:fix": "oxlint \"src/**/*.js\" \"public/**/*.js\" ./*.js --fix",
         "plugins:update": "node plugins update",
         "plugins:install": "node plugins install"
     },
@@ -161,10 +161,10 @@
         "@types/write-file-atomic": "^4.0.3",
         "@types/yargs": "^17.0.33",
         "@types/yauzl": "^2.10.3",
-        "eslint": "^8.57.1",
         "eslint-plugin-jest": "^27.9.0",
         "eslint-plugin-jsdoc": "^48.10.0",
         "eslint-plugin-playwright": "^2.3.0",
+        "oxlint": "^1.71.0",
         "typescript": "^5.9.3"
     }
 }
