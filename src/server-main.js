@@ -374,7 +374,9 @@ async function postSetupTasks(result) {
                 ? { command: 'open', args: darwinApp ? ['-a', darwinApp, browserLaunchUrl.toString()] : [browserLaunchUrl.toString()] }
                 : process.platform === 'win32' && !isAndroid
                     ? { command: 'cmd', args: ['/c', 'start', '""', browserLaunchUrl.toString()] }
-                    : { command: 'xdg-open', args: linuxBrowser ? [linuxBrowser, browserLaunchUrl.toString()] : [browserLaunchUrl.toString()] };
+                    : linuxBrowser
+                        ? { command: linuxBrowser, args: [browserLaunchUrl.toString()] }
+                        : { command: 'xdg-open', args: [browserLaunchUrl.toString()] };
             const subprocess = child_process.spawn(command, args, { stdio: 'ignore', detached: true });
             subprocess.unref();
         } catch (error) {
