@@ -3,14 +3,14 @@
 # Make sure pwd is the directory of the script
 cd "$(dirname "$0")"
 
-if ! command -v npm &> /dev/null
+if ! command -v deno &> /dev/null
 then
-    echo -e "\033[0;31mnpm could not be found in PATH. If the startup fails, please install Node.js from https://nodejs.org/\033[0m"
+    echo -e "\033[0;31mdeno could not be found in PATH. If the startup fails, please install Deno from https://deno.com/\033[0m"
 fi
 
-echo "Installing Node Modules..."
+echo "Installing Deno Modules..."
 export NODE_ENV=production
-npm install --no-save --no-audit --no-fund --loglevel=error --no-progress --omit=dev --ignore-scripts
+deno install --prod -q
 
 echo "Entering SillyTavern..."
 node "server.js" "$@"
