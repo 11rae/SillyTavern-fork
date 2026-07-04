@@ -14,4 +14,4 @@ deno install --prod -q
 
 echo "Entering SillyTavern..."
 # Since Deno refuses to work when LD_PRELOAD is set and Termux sets LD_PRELOAD for compatibility reasons, we unset it temporarily.
-(unset LD_PRELOAD && deno task start:deno $@)
+(unset LD_PRELOAD && export NODE_ENV=production && deno task start:deno $@)
