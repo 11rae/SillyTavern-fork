@@ -34,6 +34,9 @@ export default function getRolldownServeMiddleware() {
 
         const publicLibConfig = getPublicLibConfig({ forceDist });
         await build(publicLibConfig);
+        if (globalThis.Deno?.permissions?.revoke) {
+            await Deno.permissions.revoke({ name: 'ffi' });
+        }
     };
 
     return devMiddleware;

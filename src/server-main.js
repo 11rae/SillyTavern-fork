@@ -378,6 +378,9 @@ async function postSetupTasks(result) {
                         ? { command: linuxBrowser, args: [browserLaunchUrl.toString()] }
                         : { command: 'xdg-open', args: [browserLaunchUrl.toString()] };
             const subprocess = child_process.spawn(command, args, { stdio: 'ignore', detached: true });
+            subprocess.on('error', (error) => {
+                console.error('Failed to launch the browser. Open the URL manually.', error.message);
+            });
             subprocess.unref();
         } catch (error) {
             console.error('Failed to launch the browser. Open the URL manually.', error);
