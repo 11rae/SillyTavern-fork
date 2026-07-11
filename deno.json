@@ -10,17 +10,42 @@
                 ]
             },
             "write": {
-                "allow": ["."]
+                "allow": ["."],
+                "deny": [
+                    "deno.json",
+                    "package.json",
+                    "deno.lock",
+                    "package-lock.json",
+                    "start.sh",
+                    "Start.bat",
+                    "UpdateAndStart.bat",
+                    "UpdateForkAndStart.bat"
+                ]
             },
             "run": {
                 "allow": [
                     "open",
-                    "cmd",
                     "xdg-open",
-                    "firefox",
+                    "powershell",
+                    "powershell.exe",
+                    "pwsh",
+                    "pwsh.exe",
                     "google-chrome",
+                    "google-chrome-stable",
+                    "chromium",
+                    "chromium-browser",
+                    "brave-browser",
+                    "brave",
+                    "firefox",
                     "microsoft-edge",
-                    "brave-browser"
+                    "microsoft-edge-dev",
+                    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
+                    "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+                    "/mnt/c/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
+                    "/mnt/c/Program Files (x86)/BraveSoftware/Brave-Browser/Application/brave.exe",
+                    "/mnt/c/Program Files/Mozilla Firefox/firefox.exe",
+                    "/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+                    "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
                 ]
             },
             "env": {

@@ -119,7 +119,7 @@
         "debug": "node --inspect server.js",
         "start:global": "node server.js --global",
         "start:electron": "cd ./src/electron && npm run start",
-        "start:deno": "BROWSERSLIST_ROOT_PATH=. deno run --permission-set=default server.js",
+        "start:deno": "deno run --permission-set=default server.js",
         "start:no-csrf": "node server.js --disableCsrf",
         "lint": "oxlint \"src/**/*.js\" \"public/**/*.js\" ./*.js",
         "lint:fix": "oxlint \"src/**/*.js\" \"public/**/*.js\" ./*.js --fix",

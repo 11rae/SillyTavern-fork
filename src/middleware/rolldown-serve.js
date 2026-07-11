@@ -33,7 +33,15 @@ export default function getRolldownServeMiddleware() {
         console.log('Compiling frontend libraries...');
 
         const publicLibConfig = getPublicLibConfig({ forceDist });
-        await build(publicLibConfig);
+        try {
+            await build(publicLibConfig);
+        } catch (error) {
+            console.warn("Failed to compile frontend libraries. ", error);
+            if (globalThis.Deno?.permissions?.revoke) {
+                await Deno.permissions.revoke({ name: 'ffi' });
+            }
+        }
+
         if (globalThis.Deno?.permissions?.revoke) {
             await Deno.permissions.revoke({ name: 'ffi' });
         }

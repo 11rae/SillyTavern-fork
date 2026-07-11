@@ -379,11 +379,17 @@ async function postSetupTasks(result) {
                         : { command: 'xdg-open', args: [browserLaunchUrl.toString()] };
             const subprocess = child_process.spawn(command, args, { stdio: 'ignore', detached: true });
             subprocess.on('error', (error) => {
-                console.error('Failed to launch the browser. Open the URL manually.', error.message);
+                console.error('Failed to launch the browser. Open the URL manually.', error);
             });
             subprocess.unref();
+            if (globalThis.Deno?.permissions?.revoke) {
+                await Deno.permissions.revoke({ name: 'run' });
+            }
         } catch (error) {
             console.error('Failed to launch the browser. Open the URL manually.', error);
+            if (globalThis.Deno?.permissions?.revoke) {
+                await Deno.permissions.revoke({ name: 'run' });
+            }
         }
     }
 
