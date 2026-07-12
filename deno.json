@@ -6,7 +6,8 @@
                     ".",
                     "/.dockerenv",
                     "/usr/bin/ldd",
-                    "/proc/self/cgroup"
+                    "/proc/self/cgroup",
+                    "/proc/version"
                 ]
             },
             "write": {
@@ -24,28 +25,13 @@
             },
             "run": {
                 "allow": [
-                    "open",
+                    "cmd",
+                    "cmd.exe",
                     "xdg-open",
-                    "powershell",
-                    "powershell.exe",
-                    "pwsh",
-                    "pwsh.exe",
-                    "google-chrome",
-                    "google-chrome-stable",
-                    "chromium",
-                    "chromium-browser",
-                    "brave-browser",
-                    "brave",
                     "firefox",
+                    "google-chrome",
                     "microsoft-edge",
-                    "microsoft-edge-dev",
-                    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
-                    "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-                    "/mnt/c/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
-                    "/mnt/c/Program Files (x86)/BraveSoftware/Brave-Browser/Application/brave.exe",
-                    "/mnt/c/Program Files/Mozilla Firefox/firefox.exe",
-                    "/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-                    "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+                    "brave-browser"
                 ]
             },
             "env": {

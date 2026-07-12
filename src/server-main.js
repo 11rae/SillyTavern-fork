@@ -364,19 +364,44 @@ async function postSetupTasks(result) {
     const browserLaunchUrl = cliArgs.getBrowserLaunchUrl(browserLaunchHostname);
     const browserLaunchApp = String(getConfigValue('browserLaunch.browser', 'default') ?? '');
 
-    if (cliArgs.browserLaunchEnabled) {
+if (cliArgs.browserLaunchEnabled) {
         try {
             console.log(`Launching in a browser: ${browserLaunchApp}...`);
             const isAndroid = process.platform === 'android';
-            const darwinApp = browserLaunchApp === 'firefox' ? 'firefox' : browserLaunchApp === 'chrome' ? 'google chrome' : browserLaunchApp === 'edge' ? 'microsoft edge' : browserLaunchApp === 'brave' ? 'brave browser' : '';
+
+            // Detect WSL using the /proc/version trick
+            let isWsl = false;
+            if (process.platform === 'linux') {
+                try {
+                    const fs = await import('node:fs');
+                    const version = fs.readFileSync('/proc/version', 'utf8').toLowerCase();
+                    isWsl = version.includes('microsoft') || version.includes('wsl');
+                } catch {}
+            }
+
+            const isWindows = process.platform === 'win32' || isWsl;
+
+            const winBrowser = browserLaunchApp === 'firefox' ? 'firefox' : browserLaunchApp === 'chrome' ? 'chrome' : browserLaunchApp === 'edge' ? 'msedge' : browserLaunchApp === 'brave' ? 'brave' : '';
             const linuxBrowser = browserLaunchApp === 'firefox' ? 'firefox' : browserLaunchApp === 'chrome' ? 'google-chrome' : browserLaunchApp === 'edge' ? 'microsoft-edge' : browserLaunchApp === 'brave' ? 'brave-browser' : '';
-            const { command, args } = process.platform === 'darwin'
-                ? { command: 'open', args: darwinApp ? ['-a', darwinApp, browserLaunchUrl.toString()] : [browserLaunchUrl.toString()] }
-                : process.platform === 'win32' && !isAndroid
-                    ? { command: 'cmd', args: ['/c', 'start', '""', browserLaunchUrl.toString()] }
-                    : linuxBrowser
-                        ? { command: linuxBrowser, args: [browserLaunchUrl.toString()] }
-                        : { command: 'xdg-open', args: [browserLaunchUrl.toString()] };
+
+            let command;
+            let args;
+
+            if (isWindows && !isAndroid) {
+                command = isWsl ? 'cmd.exe' : 'cmd';
+                args = ['/c', 'start', '""'];
+                if (winBrowser) {
+                    args.push(winBrowser);
+                }
+                args.push(browserLaunchUrl.toString());
+            } else if (linuxBrowser) {
+                command = linuxBrowser;
+                args = [browserLaunchUrl.toString()];
+            } else {
+                command = 'xdg-open';
+                args = [browserLaunchUrl.toString()];
+            }
+
             const subprocess = child_process.spawn(command, args, { stdio: 'ignore', detached: true });
             subprocess.on('error', (error) => {
                 console.error('Failed to launch the browser. Open the URL manually.', error);
