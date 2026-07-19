@@ -12,10 +12,10 @@ start_sillytavern() {
     fi
 
     # Execute init script to auto-populate config.yaml with missing values
-    $PREFIX npm run init
+    $PREFIX deno task init
 
     # Start the server
-    exec $PREFIX node server.js --listen "$@"
+    exec $PREFIX deno task start:docker "$@"
 }
 
 # Dirs that MUST be present at this point (e.g for volumeless docker runs).

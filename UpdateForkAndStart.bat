@@ -103,7 +103,7 @@ if %errorlevel% neq 0 (
 echo Installing npm packages and starting server
 set NODE_ENV=production
 call deno install --prod -q
-deno task start:deno %*
+deno task start %*
 
 :end
 pause

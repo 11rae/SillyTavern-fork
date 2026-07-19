@@ -1,6 +1,6 @@
 {
     "permissions": {
-        "default": {
+        "server": {
             "read": {
                 "allow": [
                     ".",
@@ -46,6 +46,15 @@
             "sys": {
                 "allow": true
             }
+        },
+        "init": {
+            "read": {
+                "allow": ["."]
+            },
+            "write": {
+                "allow": ["."]
+            },
+            "env": true
         }
     },
     "nodeModulesDir": "auto"
