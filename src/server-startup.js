@@ -60,6 +60,8 @@ import { router as volcengineRouter } from './endpoints/volcengine.js';
  * @property {unknown} [v4Error] The IPv4 server startup error
  * @property {boolean} useIPv6 If use IPv6
  * @property {boolean} useIPv4 If use IPv4
+ * @property {number|null} v6Port The port the IPv6 server is listening on, or null if it failed to start
+ * @property {number|null} v4Port The port the IPv4 server is listening on, or null if it failed to start
  */
 
 /**
@@ -282,7 +284,7 @@ export class ServerStartup {
             };
             const server = https.createServer(sslOptions, this.app);
             server.on('error', reject);
-            server.on('listening', resolve);
+            server.on('listening', () => resolve(server));
 
             let host = url.hostname;
             if (ipVersion === 6) host = urlHostnameToIPv6(url.hostname);
@@ -305,7 +307,7 @@ export class ServerStartup {
         return new Promise((resolve, reject) => {
             const server = http.createServer(this.app);
             server.on('error', reject);
-            server.on('listening', resolve);
+            server.on('listening', () => resolve(server));
 
             let host = url.hostname;
             if (ipVersion === 6) host = urlHostnameToIPv6(url.hostname);
@@ -329,12 +331,14 @@ export class ServerStartup {
         let v4Failed = false;
         let v6Error;
         let v4Error;
+        let v6Server = null;
+        let v4Server = null;
 
         const createFunc = this.cliArgs.ssl ? this.#createHttpsServer.bind(this) : this.#createHttpServer.bind(this);
 
         if (useIPv6) {
             try {
-                await createFunc(this.cliArgs.getIPv6ListenUrl(), 6);
+                v6Server = await createFunc(this.cliArgs.getIPv6ListenUrl(), 6);
             } catch (error) {
                 console.error('Warning: failed to start server on IPv6');
                 if (this.#isAddressInUseError(error)) {
@@ -350,7 +354,7 @@ export class ServerStartup {
 
         if (useIPv4) {
             try {
-                await createFunc(this.cliArgs.getIPv4ListenUrl(), 4);
+                v4Server = await createFunc(this.cliArgs.getIPv4ListenUrl(), 4);
             } catch (error) {
                 console.error('Warning: failed to start server on IPv4');
                 if (this.#isAddressInUseError(error)) {
@@ -364,7 +368,7 @@ export class ServerStartup {
             }
         }
 
-        return [v6Failed, v4Failed, v6Error, v4Error];
+        return [v6Failed, v4Failed, v6Error, v4Error, v6Server, v4Server];
     }
 
     /**
@@ -444,8 +448,18 @@ export class ServerStartup {
             process.exit(1);
         }
 
-        const [v6Failed, v4Failed, v6Error, v4Error] = await this.#startHTTPorHTTPS(useIPv6, useIPv4);
-        const result = { v6Failed, v4Failed, v6Error, v4Error, useIPv6, useIPv4 };
+        const [v6Failed, v4Failed, v6Error, v4Error, v6Server, v4Server] = await this.#startHTTPorHTTPS(useIPv6, useIPv4);
+        /** @type {ServerStartupResult} */
+        const result = {
+            v6Failed,
+            v4Failed,
+            v6Error,
+            v4Error,
+            useIPv6,
+            useIPv4,
+            v6Port: v6Server?.address()?.port ?? null,
+            v4Port: v4Server?.address()?.port ?? null,
+        };
         this.#handleServerListenFail(result);
         return result;
     }

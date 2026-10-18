@@ -361,7 +361,7 @@ async function preSetupTasks() {
  */
 async function postSetupTasks(result) {
     const browserLaunchHostname = await cliArgs.getBrowserLaunchHostname(result);
-    const browserLaunchUrl = cliArgs.getBrowserLaunchUrl(browserLaunchHostname);
+    const browserLaunchUrl = cliArgs.getBrowserLaunchUrl(browserLaunchHostname, result.v4Port ?? result.v6Port);
     const browserLaunchApp = String(getConfigValue('browserLaunch.browser', 'default') ?? '');
 
     if (cliArgs.browserLaunchEnabled) {
@@ -422,13 +422,13 @@ async function postSetupTasks(result) {
 
     if (result.useIPv6 && !result.v6Failed) {
         logListen += color.green(
-            ' IPv6: ' + cliArgs.getIPv6ListenUrl().host,
+            ' IPv6: ' + replaceUrlPort(cliArgs.getIPv6ListenUrl(), result.v6Port).host,
         );
     }
 
     if (result.useIPv4 && !result.v4Failed) {
         logListen += color.green(
-            ' IPv4: ' + cliArgs.getIPv4ListenUrl().host,
+            ' IPv4: ' + replaceUrlPort(cliArgs.getIPv4ListenUrl(), result.v4Port).host,
         );
     }
 
@@ -447,6 +447,22 @@ async function postSetupTasks(result) {
 
     setupLogLevel();
     serverEvents.emit(EVENT_NAMES.SERVER_STARTED, { url: browserLaunchUrl });
+}
+
+/**
+ * Replaces the port of a URL if an actual port was resolved. This is needed when the port is set to 0,
+ * which makes the operating system assign an ephemeral port to the listening server.
+ * @param {URL} url The URL to replace the port of
+ * @param {number|null} [port] The actual listening port, if known
+ * @returns {URL} The URL with the actual port, or the original URL if unknown
+ */
+function replaceUrlPort(url, port) {
+    if (typeof port !== 'number' || Number.isNaN(port) || port <= 0) {
+        return url;
+    }
+    const urlWithPort = new URL(url.toString());
+    urlWithPort.port = String(port);
+    return urlWithPort;
 }
 
 /**
