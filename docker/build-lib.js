@@ -1,4 +1,4 @@
-import getWebpackServeMiddleware from '../src/middleware/webpack-serve.js';
+import getRspackServeMiddleware from '../src/middleware/rspack-serve.js';
 
-const middleware = getWebpackServeMiddleware();
-await middleware.runWebpackCompiler({ forceDist: true });
+const middleware = getRspackServeMiddleware();
+await middleware.runRspackCompiler({ forceDist: true });

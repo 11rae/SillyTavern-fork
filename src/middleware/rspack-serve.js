@@ -1,10 +1,9 @@
 import path from 'node:path';
-import webpack from 'webpack';
-import getPublicLibConfig from '../../webpack.config.js';
+import rspack from '@rspack/core';
+import getPublicLibConfig from '../../rspack.config.js';
 
-export default function getWebpackServeMiddleware() {
+export default function getRspackServeMiddleware() {
     /**
-     * A very spartan recreation of webpack-dev-middleware.
      * @param {import('express').Request} req Request object.
      * @param {import('express').Response} res Response object.
      * @param {import('express').NextFunction} next Next function.
@@ -24,18 +23,18 @@ export default function getWebpackServeMiddleware() {
     }
 
     /**
-     * Wait until Webpack is done compiling.
+     * Wait until Rspack is done compiling.
      * @param {object} param Parameters.
      * @param {boolean} [param.forceDist=false] Whether to force the use the /dist folder.
      * @param {boolean} [param.pruneCache=false] Whether to prune old cache directories before compiling.
      * @returns {Promise<void>}
      */
-    devMiddleware.runWebpackCompiler = ({ forceDist = false, pruneCache = false } = {}) => {
+    devMiddleware.runRspackCompiler = ({ forceDist = false, pruneCache = false } = {}) => {
         console.log();
         console.log('Compiling frontend libraries...');
 
         const publicLibConfig = getPublicLibConfig({ forceDist, pruneCache });
-        const compiler = webpack(publicLibConfig);
+        const compiler = rspack(publicLibConfig);
 
         return new Promise((resolve) => {
             compiler.run((_error, stats) => {
