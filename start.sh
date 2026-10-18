@@ -8,8 +8,14 @@ then
     echo -e "\033[0;31mnpm could not be found in PATH. If the startup fails, please install Node.js from https://nodejs.org/\033[0m"
 fi
 
+if ! command -v pnpm &> /dev/null
+then
+    echo -e "\033[0;31mpnpm could not be found in PATH. If the startup fails, please install pnpm from https://pnpm.io\033[0m"
+fi
+
 echo "Installing Node Modules..."
 export NODE_ENV=production
+pnpm install --prod --loglevel=error || \
 npm install --no-save --no-audit --no-fund --loglevel=error --no-progress --omit=dev --ignore-scripts
 
 echo "Entering SillyTavern..."
