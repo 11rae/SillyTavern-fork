@@ -38,7 +38,7 @@ import { initConfig } from './config-init.js';
  * @property {function(): URL} getIPv4ListenUrl Get IPv4 listen URL
  * @property {function(): URL} getIPv6ListenUrl Get IPv6 listen URL
  * @property {function(import('./server-startup.js').ServerStartupResult): Promise<string>} getBrowserLaunchHostname Get browser launch hostname
- * @property {function(string): URL} getBrowserLaunchUrl Get browser launch URL
+ * @property {function(string, number=): URL} getBrowserLaunchUrl Get browser launch URL
  */
 
 /**
@@ -357,8 +357,8 @@ export class CommandLineParser {
 
                 return this.browserLaunchHostname;
             },
-            getBrowserLaunchUrl: function (hostname) {
-                const browserLaunchPort = (this.browserLaunchPort >= 0) ? this.browserLaunchPort : this.port;
+            getBrowserLaunchUrl: function (hostname, port) {
+                const browserLaunchPort = (this.browserLaunchPort >= 0) ? this.browserLaunchPort : (port ?? this.port);
                 return new URL(
                     (this.ssl ? 'https://' : 'http://') +
                     (hostname) +
