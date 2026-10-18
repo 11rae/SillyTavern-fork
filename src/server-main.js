@@ -42,7 +42,7 @@ import {
     migratePublicOverrides,
 } from './users.js';
 
-import getWebpackServeMiddleware from './middleware/webpack-serve.js';
+import getRspackServeMiddleware from './middleware/rspack-serve.js';
 import basicAuthMiddleware from './middleware/basicAuth.js';
 import getWhitelistMiddleware from './middleware/whitelist.js';
 import accessLoggerMiddleware, { getAccessLogPath, migrateAccessLog } from './middleware/accessLogWriter.js';
@@ -236,8 +236,8 @@ app.get('/callback/:source?', (request, response) => {
 app.get('/login', loginPageMiddleware);
 
 // Host frontend assets
-const webpackMiddleware = getWebpackServeMiddleware();
-app.use(webpackMiddleware);
+const rspackMiddleware = getRspackServeMiddleware();
+app.use(rspackMiddleware);
 app.use(userCssMiddleware);
 app.use(express.static(path.join(serverDirectory, 'public'), {}));
 
@@ -351,7 +351,7 @@ async function preSetupTasks() {
     initRequestProxy({ enabled: cliArgs.requestProxyEnabled, url: cliArgs.requestProxyUrl, bypass: cliArgs.requestProxyBypass, enableKeepAlive: cliArgs.enableKeepAlive, privateRequestFilterEnabled: requestFilterOptions.enabled });
 
     // Wait for frontend libs to compile
-    await webpackMiddleware.runWebpackCompiler({ pruneCache: true });
+    await rspackMiddleware.runRspackCompiler({ pruneCache: true });
 }
 
 /**

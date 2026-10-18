@@ -3,101 +3,99 @@ import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import isDocker from 'is-docker';
-import webpack from 'webpack';
+import rspack from '@rspack/core';
 import { serverDirectory } from './src/server-directory.js';
 import { getVersion, color } from './src/util.js';
 
 /**
- * Generate a cache version string based on the application version, Git revision, and Webpack version.
+ * Generate a cache version string based on the application version, Git revision, and Rspack version.
  * @returns {string} The cache version string.
  */
-function getWebpackCacheVersion() {
+function getRspackCacheVersion() {
     return crypto.createHash('shake256', { outputLength: 8 })
-        .update(JSON.stringify([appVersion.pkgVersion, appVersion.gitRevision, webpack.version]))
+        .update(JSON.stringify([appVersion.pkgVersion, appVersion.gitRevision, rspack.version]))
         .digest('hex');
 }
 
 /**
- * Prune old Webpack cache directories that do not match the current cache version.
- * @param {string} webpackRoot The root directory where Webpack caches are stored.
+ * Prune old Rspack cache directories that do not match the current cache version.
+ * @param {string} rspackRoot The root directory where Rspack caches are stored.
  * @param {string} currentCacheVersion The current cache version to keep.
  */
-function pruneWebpackCache(webpackRoot, currentCacheVersion) {
+function pruneRspackCache(rspackRoot, currentCacheVersion) {
     try {
-        if (!fs.existsSync(webpackRoot)) {
+        if (!fs.existsSync(rspackRoot)) {
             return;
         }
 
-        const cacheDirectories = fs.readdirSync(webpackRoot, { withFileTypes: true })
+        const cacheDirectories = fs.readdirSync(rspackRoot, { withFileTypes: true })
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name);
 
         for (const dir of cacheDirectories) {
-            const dirPath = path.join(webpackRoot, dir);
+            const dirPath = path.join(rspackRoot, dir);
             if (dir !== currentCacheVersion) {
                 try {
                     fs.rmSync(dirPath, { recursive: true, force: true });
                     console.debug(`Removed outdated cache directory: ${color.yellow(dir)}`);
                 } catch (error) {
-                    console.error(`Failed to remove Webpack cache directory: ${color.red(dir)}`, error);
+                    console.error(`Failed to remove Rspack cache directory: ${color.red(dir)}`, error);
                 }
             }
         }
     } catch (error) {
-        console.error('Failed to read Webpack cache directories for pruning.', error);
+        console.error('Failed to read Rspack cache directories for pruning.', error);
     }
 }
 
 const appVersion = await getVersion();
 
 /**
- * Get the Webpack configuration for the public/lib.js file.
- * 1. Docker has got cache and the output file pre-baked.
+ * Get the Rspack configuration for the public/lib.js file.
+ * 1. Docker has the cache and the output file pre-baked.
  * 2. Non-Docker environments use the global DATA_ROOT variable to determine the cache and output directories.
  * @param {object} options Configuration options.
  * @param {boolean} [options.forceDist=false] Whether to force the use the /dist folder.
  * @param {boolean} [options.pruneCache=false] Whether to prune old cache directories.
- * @returns {import('webpack').Configuration}
+ * @returns {import('rspack').Configuration}
  * @throws {Error} If the DATA_ROOT variable is not set.
  * */
 export default function getPublicLibConfig({ forceDist = false, pruneCache = false } = {}) {
-    function getWebpackRoot() {
+    function getRspackRoot() {
         if (forceDist || isDocker()) {
-            return path.resolve(process.cwd(), 'dist', '_webpack');
+            return path.resolve(process.cwd(), 'dist', '_rspack');
         }
 
         if (typeof globalThis.DATA_ROOT === 'string') {
-            return path.resolve(globalThis.DATA_ROOT, '_webpack');
+            return path.resolve(globalThis.DATA_ROOT, '_rspack');
         }
 
         throw new Error('DATA_ROOT variable is not set.');
     }
 
     function getCacheDirectory() {
-        return path.join(webpackRoot, cacheVersion, 'cache');
+        return path.join(rspackRoot, cacheVersion, 'cache');
     }
 
     function getOutputDirectory() {
-        return path.join(webpackRoot, cacheVersion, 'output');
+        return path.join(rspackRoot, cacheVersion, 'output');
     }
 
-    const webpackRoot = getWebpackRoot();
-    const cacheVersion = getWebpackCacheVersion();
+    const rspackRoot = getRspackRoot();
+    const cacheVersion = getRspackCacheVersion();
     const cacheDirectory = getCacheDirectory();
     const outputDirectory = getOutputDirectory();
 
     if (pruneCache) {
-        pruneWebpackCache(webpackRoot, cacheVersion);
+        pruneRspackCache(rspackRoot, cacheVersion);
     }
 
     return {
         mode: 'production',
         entry: path.join(serverDirectory, 'public/lib.js'),
         cache: {
-            type: 'filesystem',
-            cacheDirectory: cacheDirectory,
-            store: 'pack',
-            compression: 'gzip',
+            type: 'persistent',
+            directory: cacheDirectory,
         },
         devtool: false,
         watch: false,
@@ -109,16 +107,15 @@ export default function getPublicLibConfig({ forceDist = false, pruneCache = fal
             colors: true,
             timings: true,
         },
-        experiments: {
-            outputModule: true,
-        },
         performance: {
             hints: false,
         },
         output: {
             path: outputDirectory,
             filename: 'lib.js',
-            libraryTarget: 'module',
+            library: {
+                type: 'modern-module',
+            },
         },
     };
 }
