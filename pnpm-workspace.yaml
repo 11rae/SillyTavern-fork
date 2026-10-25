@@ -2,3 +2,6 @@ blockExoticSubdeps: true
 trustPolicy: no-downgrade
 ignoreScripts: true
 minimumReleaseAge: 10080
+overrides:
+  eslint-plugin-jsdoc>synckit: ^0.12.3
+  onnx-proto>protobufjs: ^8.8.1
